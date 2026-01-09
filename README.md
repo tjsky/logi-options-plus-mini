@@ -13,6 +13,7 @@
 <img width="600" alt="image" src="https://github.com/Qetesh/logi-options-plus-mini/assets/4559341/d4c503a9-51d8-4a18-af90-a3f3be508e8b">
 <img width="600" alt="image" src="https://github.com/Qetesh/logi-options-plus-mini/assets/4559341/14a85961-b022-4fc9-99bf-6e30b071f54c">
 <img width="600" alt="image" src="https://github.com/Qetesh/logi-options-plus-mini/assets/4559341/bf97e703-d5d5-43d6-9236-6e1d06b7c0c8">
+<img width="600" alt="image" src="https://github.com/user-attachments/assets/66f8d2d7-5981-4085-9829-25c0189804a8">
 <img width="600" alt="image" src="https://github.com/user-attachments/assets/3afb9d21-242e-436d-af78-9d386d83bac4">
 
 
@@ -67,25 +68,24 @@
   ./logi-options-plus-mini.command
 
   ##############################################################
-  2024年12月15日 星期日 23时32分33秒 +08 | Starting install of Logi Options+
+  2024年12月15日 星期日 23时32分33秒 +08 | 开始安装 Logi Options+
   ##############################################################
 
-  Please select the features you want to keep:
-  1. analytics:             Shows or hides choice for users to opt in to share app usage and diagnostics data.
-  2. flow:                  Shows or hides the Flow feature. Default value is Yes
-  3. sso:                   Shows or hides ability for users to sign into the app.
-  4. update:                Enables or disables app updates.
-  5. dfu:                   Enables or disables device firmware updates.
-  6. backlight:             Enables or disables keyboard backlight on the supported keyboards.
-  7. logivoice:             Enables or disables LogiVoice feature.
-  8. aipromptbuilder:       Enables or disables AI Prompt Builder feature.
-  9. device-recommendation: Enables or disables device recommendation feature.
-  10. smartactions:         Enables or disables Smart Actions feature.
-  11. actions-ring:         Enables or disables Actions Ring feature.
-  12. all
-  Press enter for none
+1.  analytics:           允许收集个人使用数据和诊断信息
+2.  flow:                Flow 跨屏功能 (默认为 Yes)
+3.  sso:                 启用 罗技账户 登录模块
+4.  update:              启用 Logi Options+ 自动更新
+5.  dfu:                 启用 设备固件 自动更新
+6.  backlight:           启用 键盘背光 支持
+7.  logivoice:           启用 罗技语音功能（LogiVoice）
+8.  aipromptbuilder:     启用 AI 功能
+9.  device-recommendation: 启用 新产品推荐（新产品广告）
+10. smartactions:        启用 Smart Actions (按键宏)
+11. actions-ring:        启用 Actions Ring（快捷启动）
+12. all (全部开启)
+直接按回车键，则执行最小化精简安装，不开启任何额外功能
 
-  Enter your choices(e.g. 2 6, default is none): 
+如需自定义请输入选项 (例如 '0 2 6 10', 默认为 最小化精简安装): 
   ```
   
 ### 使用 Windows Shell
@@ -124,7 +124,7 @@
 12. all (全部开启)
 直接按回车键，则执行最小化精简安装，不开启任何额外功能
 
-如需自定义请输入选项 (例如 '0 2 6 10', 默认为 最小化精简安装): 0 5 6 10
+如需自定义请输入选项 (例如 '0 2 6 10', 默认为 最小化精简安装): 
 
   ```
 
