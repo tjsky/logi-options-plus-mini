@@ -1,5 +1,5 @@
-# Script to install latest Logi Options+ on Windows (Multi-language Support)
-
+﻿# Script to install latest Logi Options+ on Windows (Multi-language Support)
+# Fixed encoding
 # Region Detection & Language Setup 
 $isCN = $false
 $traceUrl = "https://cloudflare.com/cdn-cgi/trace"
