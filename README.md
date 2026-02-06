@@ -146,7 +146,8 @@
 - 部分Mac无法使用官方方式卸载，需使用第三方工具卸载后重新运行。已测试使用 `Pearcleaner`卸载后可正常运行安装
 - Windows系统下安装时报错`安装失败.退出提示:1287` ：你的系统安全配置阻止了安装，尝试右键bat脚本文件，选择“以管理员权限运行”
 - Windows系统下安装时报错`安装失败.退出提示:1008` ：你的系统安全配置阻止了安装，尝试右键bat脚本文件，选择“以管理员权限运行”
-
+- 启用了SSO（罗技账户登录模块）后无法上传配置信息到云端：表现为可登录，可下载云端配置，但无法上传配置到云端，这貌似是罗技自己安装程序中的bug 。
+- 
 ## 致谢 / 说明
 - 本项目基于 [Qetesh](https://github.com/Qetesh) 的 [logi-options-plus-mini](https://github.com/Qetesh/logi-options-plus-mini) 修改开发。 感谢原作者的开源贡献。
 - 分叉信息：由 [tjsky](https://github.com/tjsky) 分叉并修改：
