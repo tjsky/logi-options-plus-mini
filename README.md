@@ -6,7 +6,7 @@
 
 🎉 Logi Options+ mini for Windows 版本发布！欢迎大家[下载](https://github.com/Qetesh/logi-options-plus-mini/releases)体验，并反馈使用过程中遇到的问题或建议 ❤️
 
-<img width="600" height="1812" alt="ScreenShot_2026-02-25_015557_350" src="https://github.com/user-attachments/assets/5121e1c2-d4bb-4300-b107-511d4be6e2bf" />
+<img width="600" alt="ScreenShot_2026-02-25_015557_350" src="https://github.com/user-attachments/assets/5121e1c2-d4bb-4300-b107-511d4be6e2bf" />
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="https://github.com/user-attachments/assets/11adddd4-bf0e-4e6d-b164-483b2521e228">
@@ -166,8 +166,12 @@
 
 
 ### Stars历史
-<a href="https://starchart.cc/tjsky/logi-options-plus-mini">
-  <img width="800" alt="Stargazers over time"  src="https://starchart.cc/tjsky/logi-options-plus-mini.svg?variant=adaptive" />
+<a href="https://www.star-history.com/?repos=tjsky%2Flogi-options-plus-mini&type=date&legend=top-left">
+ <picture>
+   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/chart?repos=tjsky/logi-options-plus-mini&type=date&theme=dark&legend=top-left" />
+   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/chart?repos=tjsky/logi-options-plus-mini&type=date&legend=top-left" />
+   <img alt="Star History Chart" src="https://api.star-history.com/chart?repos=tjsky/logi-options-plus-mini&type=date&legend=top-left" />
+ </picture>
 </a>
 
 
