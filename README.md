@@ -40,10 +40,11 @@
   - update 应用程序更新
   - dfu 设备固件更新
   - logivoice 罗技语音功能
-  - aipromptbuilder  AI Prompt Builder 功能（仅限macOS）
-  - smartactions
-  - actions-ring
-  - device-recommendation 设备推荐功能（仅限macOS）
+  - backlight 键盘背光
+  - smartactions 按键宏
+  - actions-ring 快捷轮盘
+  - device-recommendation 设备推荐功能
+  - ~~aipromptbuilder~~ 官方安装器已移除该参数，无法再通过命令行控制
 
 ## 使用方法
 
@@ -82,11 +83,10 @@
 5.  dfu:                 启用 设备固件 自动更新
 6.  backlight:           启用 键盘背光 支持
 7.  logivoice:           启用 罗技语音功能（LogiVoice）
-8.  aipromptbuilder:     启用 AI 功能
-9.  device-recommendation: 启用 新产品推荐（新产品广告）
-10. smartactions:        启用 Smart Actions (按键宏)
-11. actions-ring:        启用 Actions Ring（快捷启动）
-12. all (全部开启)
+8.  device-recommendation: 启用 新产品推荐（新产品广告）
+9.  smartactions:        启用 Smart Actions (按键宏)
+10. actions-ring:        启用 Actions Ring（快捷启动）
+11. all (全部开启)
 直接按回车键，则执行最小化精简安装，不开启任何额外功能
 
 如需自定义请输入选项 (例如 '0 2 6 10', 默认为 最小化精简安装): 
@@ -126,11 +126,10 @@
 5.  dfu:                 启用 设备固件 自动更新
 6.  backlight:           启用 键盘背光 支持
 7.  logivoice:           启用 罗技语音功能（LogiVoice）
-8.  aipromptbuilder:     启用 AI 功能
-9.  device-recommendation: 启用 新产品推荐（新产品广告）
-10. smartactions:        启用 Smart Actions (按键宏)
-11. actions-ring:        启用 Actions Ring（快捷启动）
-12. all (全部开启)
+8.  device-recommendation: 启用 新产品推荐（新产品广告）
+9.  smartactions:        启用 Smart Actions (按键宏)
+10. actions-ring:        启用 Actions Ring（快捷启动）
+11. all (全部开启)
 直接按回车键，则执行最小化精简安装，不开启任何额外功能
 
 如需自定义请输入选项 (例如 '0 2 6 10', 默认为 最小化精简安装): 
