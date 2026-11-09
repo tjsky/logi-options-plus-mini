@@ -38,11 +38,10 @@ if ($isCN) {
     $txt.Menu5             = "5.  dfu:                 启用 设备固件 自动更新"
     $txt.Menu6             = "6.  backlight:           启用 键盘背光 支持"
     $txt.Menu7             = "7.  logivoice:           启用 罗技语音功能（LogiVoice）"
-    $txt.Menu8             = "8.  aipromptbuilder:     启用 AI 功能"
-    $txt.Menu9             = "9.  device-recommendation: 启用 新产品推荐（新产品广告）"
-    $txt.Menu10            = "10. smartactions:        启用 Smart Actions (按键宏)"
-    $txt.Menu11            = "11. actions-ring:        启用 Actions Ring（快捷启动）"
-    $txt.Menu12            = "12. all (全部开启)"
+    $txt.Menu8             = "8.  device-recommendation: 启用 新产品推荐（新产品广告）"
+    $txt.Menu9             = "9.  smartactions:        启用 Smart Actions (按键宏)"
+    $txt.Menu10            = "10. actions-ring:        启用 Actions Ring（快捷启动）"
+    $txt.Menu11            = "11. all (全部开启)"
     $txt.MenuNone          = "直接按回车键，则执行最小化精简安装，不开启任何额外功能"
     $txt.InputPrompt       = "如需自定义请输入选项 (例如 '0 2 6 10', 默认为 最小化精简安装)"
     $txt.ConfirmTitle      = "请确认以下设置:"
@@ -75,11 +74,10 @@ if ($isCN) {
     $txt.Menu5             = "5.  dfu:                 Enables or disables device firmware updates."
     $txt.Menu6             = "6.  backlight:           Enables or disables keyboard backlight on the supported keyboards."
     $txt.Menu7             = "7.  logivoice:           Enables or disables LogiVoice feature."
-    $txt.Menu8             = "8.  aipromptbuilder:     Enables or disables AI Prompt Builder feature."
-    $txt.Menu9             = "9.  device-recommendation: Enables or disables device recommendation feature."
-    $txt.Menu10            = "10. smartactions:        Enables or disables Smart Actions feature."
-    $txt.Menu11            = "11. actions-ring:        Enables or disables Actions Ring feature."
-    $txt.Menu12            = "12. all"
+    $txt.Menu8             = "8.  device-recommendation: Enables or disables device recommendation feature."
+    $txt.Menu9             = "9.  smartactions:        Enables or disables Smart Actions feature."
+    $txt.Menu10            = "10. actions-ring:        Enables or disables Actions Ring feature."
+    $txt.Menu11            = "11. all"
     $txt.MenuNone          = "Press enter for none"
     $txt.InputPrompt       = "Enter your choices (e.g. 2 6, default is none)"
     $txt.ConfirmTitle      = "Please confirm the following settings:"
@@ -147,7 +145,6 @@ Write-Host $txt.Menu8
 Write-Host $txt.Menu9
 Write-Host $txt.Menu10
 Write-Host $txt.Menu11
-Write-Host $txt.Menu12
 Write-Host $txt.MenuNone
 Write-Host ""
 
@@ -166,13 +163,12 @@ $update = "No"
 $dfu = "No"
 $backlight = "No"
 $logivoice = "No"
-$aipromptbuilder = "No"
 $device_recommendation = "No"
 $smartactions = "No"
 $actions_ring = "No"
 
 # Logic for feature flags (Kept same as original)
-if ($selectedFeatures -eq "12") {
+if ($selectedFeatures -eq "11") {
     $quiet = " "
     $analytics = "Yes"
     $flow = "Yes"
@@ -181,7 +177,6 @@ if ($selectedFeatures -eq "12") {
     $dfu = "Yes"
     $backlight = "Yes"
     $logivoice = "Yes"
-    $aipromptbuilder = "Yes"
     $device_recommendation = "Yes"
     $smartactions = "Yes"
     $actions_ring = "Yes"
@@ -197,10 +192,9 @@ if ($selectedFeatures -eq "12") {
             "5" { $dfu = "Yes" }
             "6" { $backlight = "Yes" }
             "7" { $logivoice = "Yes" }
-            "8" { $aipromptbuilder = "Yes" }
-            "9" { $device_recommendation = "Yes" }
-            "10" { $smartactions = "Yes" }
-            "11" { $actions_ring = "Yes" }
+            "8" { $device_recommendation = "Yes" }
+            "9" { $smartactions = "Yes" }
+            "10" { $actions_ring = "Yes" }
         }
     }
 }
@@ -216,7 +210,6 @@ Write-Host "update:               $update"
 Write-Host "dfu:                  $dfu"
 Write-Host "backlight:            $backlight"
 Write-Host "logivoice:            $logivoice"
-Write-Host "aipromptbuilder:      $aipromptbuilder"
 Write-Host "device-recommendation: $device_recommendation"
 Write-Host "smartactions:         $smartactions"
 Write-Host "actions-ring:         $actions_ring"
@@ -254,7 +247,7 @@ if (Test-Path $backupPath) {
 
 # Install new version
 Write-Host "$(Get-Date) | $($txt.InstallStart) $appName..."
-$installArgs = $quiet, "/analytics", $analytics, "/flow", $flow, "/sso", $sso, "/update", $update, "/dfu", $dfu, "/backlight", $backlight, "/logivoice", $logivoice, "/aipromptbuilder", $aipromptbuilder, "/device-recommendation", $device_recommendation, "/smartactions", $smartactions, "/actions-ring", $actions_ring
+$installArgs = $quiet, "/analytics", $analytics, "/flow", $flow, "/sso", $sso, "/update", $update, "/dfu", $dfu, "/backlight", $backlight, "/logivoice", $logivoice, "/device-recommendation", $device_recommendation, "/smartactions", $smartactions, "/actions-ring", $actions_ring
 $process = Start-Process -FilePath $downloadPath -ArgumentList $installArgs -PassThru -Verb RunAs
 $Handle = $process.Handle
 $process.WaitForExit()

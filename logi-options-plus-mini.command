@@ -55,11 +55,10 @@ if [ "$IS_CN" -eq 1 ]; then
     TXT_MENU_5="5.  dfu:                 启用 设备固件 自动更新"
     TXT_MENU_6="6.  backlight:           启用 键盘背光 支持"
     TXT_MENU_7="7.  logivoice:           启用 罗技语音功能（LogiVoice）"
-    TXT_MENU_8="8.  aipromptbuilder:     启用 AI 功能"
-    TXT_MENU_9="9.  device-recommendation: 启用 新产品推荐（新产品广告）"
-    TXT_MENU_10="10. smartactions:        启用 Smart Actions （按键宏）"
-    TXT_MENU_11="11. actions-ring:        启用 Actions Ring（快捷启动）"
-    TXT_MENU_12="12. all (全部开启)"
+    TXT_MENU_8="8.  device-recommendation: 启用 新产品推荐（新产品广告）"
+    TXT_MENU_9="9.  smartactions:        启用 Smart Actions （按键宏）"
+    TXT_MENU_10="10. actions-ring:        启用 Actions Ring（快捷启动）"
+    TXT_MENU_11="11. all (全部开启)"
     TXT_MENU_NONE="直接按回车键，则执行最小化精简安装，不开启任何额外功能"
     TXT_INPUT_PROMPT="如需自定义请输入选项 (例如 '0 2 6 10', 默认为 最小化精简安装) "
     TXT_CONFIRM_TITLE="请确认以下设置:"
@@ -90,11 +89,10 @@ else
     TXT_MENU_5="5.  dfu:                 Enables or disables device firmware updates."
     TXT_MENU_6="6.  backlight:           Enables or disables keyboard backlight on the supported keyboards."
     TXT_MENU_7="7.  logivoice:           Enables or disables LogiVoice feature."
-    TXT_MENU_8="8.  aipromptbuilder:     Enables or disables AI Prompt Builder feature."
-    TXT_MENU_9="9.  device-recommendation: Enables or disables device recommendation feature."
-    TXT_MENU_10="10. smartactions:        Enables or disables Smart Actions feature."
-    TXT_MENU_11="11. actions-ring:        Enables or disables Actions Ring feature."
-    TXT_MENU_12="12. all"
+    TXT_MENU_8="8.  device-recommendation: Enables or disables device recommendation feature."
+    TXT_MENU_9="9.  smartactions:        Enables or disables Smart Actions feature."
+    TXT_MENU_10="10. actions-ring:        Enables or disables Actions Ring feature."
+    TXT_MENU_11="11. all"
     TXT_MENU_NONE="Press enter for none"
     TXT_INPUT_PROMPT="Enter your choices(e.g. 2 6, default is none): "
     TXT_CONFIRM_TITLE="Please confirm the following settings:"
@@ -138,7 +136,6 @@ echo "$TXT_MENU_8"
 echo "$TXT_MENU_9"
 echo "$TXT_MENU_10"
 echo "$TXT_MENU_11"
-echo "$TXT_MENU_12"
 echo "$TXT_MENU_NONE"
 echo ""
 
@@ -153,13 +150,12 @@ update="No"
 dfu="No"
 backlight="No"
 logivoice="No"
-aipromptbuilder="No"
 device_recommendation="No"
 smartactions="No"
 actions_ring="No"
 
 # Feature selection logic
-if [[ "$features" == *12* ]]; then
+if [[ "$features" == *11* ]]; then
   analytics="Yes"
   flow="Yes"
   sso="Yes"
@@ -167,7 +163,6 @@ if [[ "$features" == *12* ]]; then
   dfu="Yes"
   backlight="Yes"
   logivoice="Yes"
-  aipromptbuilder="Yes"
   device_recommendation="Yes"
   smartactions="Yes"
   actions_ring="Yes"
@@ -182,10 +177,9 @@ else
       5) dfu="Yes" ;;
       6) backlight="Yes" ;;
       7) logivoice="Yes" ;;
-      8) aipromptbuilder="Yes" ;;
-      9) device_recommendation="Yes" ;;
-      10) smartactions="Yes" ;;
-      11) actions_ring="Yes" ;;
+      8) device_recommendation="Yes" ;;
+      9) smartactions="Yes" ;;
+      10) actions_ring="Yes" ;;
       *) ;; # Ignore invalid
     esac
   done
@@ -201,7 +195,6 @@ echo "update:                 $update"
 echo "dfu:                    $dfu"
 echo "backlight:              $backlight"
 echo "logivoice:              $logivoice"
-echo "aipromptbuilder:        $aipromptbuilder"
 echo "device-recommendation:  $device_recommendation"
 echo "smartactions:           $smartactions"
 echo "actions-ring:           $actions_ring"
@@ -271,10 +264,9 @@ sudo "$install_path" \
         --dfu $dfu \
         --backlight $backlight \
         --logivoice $logivoice \
-        --aipromptbuilder $aipromptbuilder \
         --device-recommendation $device_recommendation \
         --smartactions $smartactions \
-        --actions-ring $actions_ring >> /dev/null 2>&1
+        --actions-ring $actions_ring
 
 if [ "$?" = "0" ]; then
     echo "$(date) | $appname $TXT_SUCCESS"
