@@ -6,7 +6,7 @@
 
 🎉 本仓库的 Windows 图形界面工具发布！Windows 用户欢迎[下载](https://github.com/tjsky/logi-options-plus-mini/releases)体验，并反馈使用过程中遇到的问题或建议 ❤️
 
-<img width="600" alt="ScreenShot_2026-02-25_015557_350" src="https://github.com/user-attachments/assets/5121e1c2-d4bb-4300-b107-511d4be6e2bf" />
+<img width="800" alt="Windows 图形界面工具" src="docs/screenshots/theme.png" />
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="https://github.com/user-attachments/assets/11adddd4-bf0e-4e6d-b164-483b2521e228">
@@ -35,8 +35,6 @@
 一个 **6 MB** 的单文件小工具，免安装、无需任何运行时，在**安装阶段**就把不想要的功能关掉，而不是装完一个 750 MB 的全家桶再逐项去设置里翻。
 
 > 本工具仍然使用罗技官方安装器本体，只负责按你的勾选拼装安装参数，并校验安装包的官方数字签名——不修改、不替换任何官方程序。
-
-![Windows 图形界面工具](docs/screenshots/theme.png)
 
 ### 功能
 

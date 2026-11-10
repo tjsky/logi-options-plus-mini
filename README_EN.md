@@ -5,7 +5,7 @@
 
 🎉 The Windows GUI tool of this repository is now available! Windows users are welcome to [download](https://github.com/tjsky/logi-options-plus-mini/releases) it, try it out, and share any issues or suggestions ❤️
 
-<img width="600" height="1812" alt="ScreenShot_2026-02-25_015557_350" src="https://github.com/user-attachments/assets/5121e1c2-d4bb-4300-b107-511d4be6e2bf" />
+<img width="800" alt="Windows GUI tool" src="docs/screenshots/theme.png" />
 
 
 <picture>
@@ -32,8 +32,6 @@ The upstream project provides a GUI application for macOS. The **Windows GUI too
 A **6 MB** single-file tool — no installer, no runtime required — that turns unwanted features **off at install time**, instead of installing a 750 MB full bundle and digging through settings afterwards.
 
 > This tool still runs the official Logi Options+ installer. It only assembles installer arguments from your selections and verifies the digital signature of the downloaded package — it never modifies or replaces any official component.
-
-![Windows GUI tool](docs/screenshots/theme.png)
 
 ### Features
 
