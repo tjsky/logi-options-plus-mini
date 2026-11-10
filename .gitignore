@@ -1,0 +1,7 @@
+# Rust 构建产物
+/target
+
+# 本地临时截图与日志（仓库内的界面截图除外）
+*.png
+!docs/screenshots/*.png
+*.log

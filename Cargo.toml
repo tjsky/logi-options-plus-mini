@@ -1,0 +1,26 @@
+[package]
+name = "logi-options-plus-mini"
+version = "1.0.0"
+edition = "2024"
+
+[dependencies]
+# 只启用 glow（OpenGL）后端：eframe 默认的 wgpu 会带进来 dx12/naga 一整条链，
+# 二进制直接多出好几 MB，和「瘦身」这个目标背道而驰。
+eframe = { version = "0.37.0", default-features = false, features = [
+    "glow",
+    "default_fonts",
+    "clipboard",
+    "links",
+] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0.154"
+ureq = { version = "2.12.1", features = ["native-certs", "json"] }
+# 刻意不用 `windows` crate：只调 4 个 API，手写 FFI 的产物更小、编译快一个数量级。
+winreg = "0.56.0"
+
+[profile.release]
+opt-level = "z"
+lto = true
+codegen-units = 1
+panic = "abort"
+strip = true

@@ -1,0 +1,37 @@
+// 不 include <winver.h>：rc.exe 没配 INCLUDE 环境变量时会报 RC1015，
+// 而我们只用两个常量，直接写数值即可。
+// VOS_NT_WINDOWS32 = 0x00040004，VFT_APP = 0x00000001
+#pragma code_page(65001)
+
+IDI_APP ICON "app.ico"
+
+1 24 "app.manifest"
+
+1 VERSIONINFO
+FILEVERSION     1,0,0,0
+PRODUCTVERSION  1,0,0,0
+FILEFLAGSMASK   0x3fL
+FILEFLAGS       0x0L
+FILEOS          0x40004L
+FILETYPE        0x1L
+FILESUBTYPE     0x0L
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "080404b0"
+        BEGIN
+            VALUE "CompanyName",      "LogiOptionsPlusMini"
+            VALUE "FileDescription",  "Logi Options+ 精简安装器"
+            VALUE "FileVersion",      "1.0.0.0"
+            VALUE "InternalName",     "logi-options-plus-mini"
+            VALUE "OriginalFilename", "logi-options-plus-mini.exe"
+            VALUE "ProductName",      "Logi Options+ 精简安装器"
+            VALUE "ProductVersion",   "1.0.0.0"
+            VALUE "LegalCopyright",   "免费使用，脚本逻辑来自 tjsky/logi-options-plus-mini"
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x804, 1200
+    END
+END
