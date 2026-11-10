@@ -3,9 +3,9 @@
 // VOS_NT_WINDOWS32 = 0x00040004，VFT_APP = 0x00000001
 #pragma code_page(65001)
 
-IDI_APP ICON "app.ico"
+IDI_APP ICON "assets/app.ico"
 
-1 24 "app.manifest"
+1 24 "assets/app.manifest"
 
 1 VERSIONINFO
 FILEVERSION     1,0,0,0

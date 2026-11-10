@@ -126,8 +126,8 @@
 2. 运行Shell脚本（需要 `sudo`权限卸载旧版本）
 
   ```bash
-  chmod u+x logi-options-plus-mini.command
-  ./logi-options-plus-mini.command
+  chmod u+x scripts/logi-options-plus-mini.command
+  ./scripts/logi-options-plus-mini.command
 
   ##############################################################
   2024年12月15日 星期日 23时32分33秒 +08 | 开始安装 Logi Options+
@@ -162,7 +162,7 @@
    如果还嫌麻烦可以从这里下只有脚本的：[蓝奏云](https://tjsky.lanzouq.com/i5Vrp3fzq9dc)
    <img width="800" height="332" alt="image" src="https://github.com/user-attachments/assets/ddd0f2a3-5fd1-4b8c-a43e-5867b8c18629" />
    
-3. 双击bat脚本 `Run_Install.bat`即可，(脚本会赋予临时的 ExecutionPolicy 权限)
+3. 双击bat脚本 `scripts/Run_Install.bat`即可，(脚本会赋予临时的 ExecutionPolicy 权限)
 
   ```powershell
 ##############################################################

@@ -7,9 +7,9 @@ use std::path::PathBuf;
 use std::process::Command;
 
 fn main() {
-    println!("cargo:rerun-if-changed=app.rc");
-    println!("cargo:rerun-if-changed=app.ico");
-    println!("cargo:rerun-if-changed=app.manifest");
+    println!("cargo:rerun-if-changed=assets/app.rc");
+    println!("cargo:rerun-if-changed=assets/app.ico");
+    println!("cargo:rerun-if-changed=assets/app.manifest");
 
     let Some(rc) = find_rc() else {
         println!("cargo:warning=找不到 rc.exe，图标与版本信息将被跳过");
@@ -25,7 +25,7 @@ fn main() {
     let status = Command::new(&rc)
         .arg("/fo")
         .arg(&res)
-        .arg("app.rc")
+        .arg("assets/app.rc")
         .status();
 
     match status {
