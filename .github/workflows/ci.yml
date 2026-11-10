@@ -1,0 +1,75 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache cargo
+        uses: Swatinem/rust-cache@v2
+
+      - name: Build
+        run: cargo build --release
+
+      # build.rs 里的 rc.exe 找不到时只会打 warning 静默跳过，
+      # 结果就是一个没有图标和版本信息的 exe。这里显式校验，不让它溜过去。
+      - name: Verify version resources
+        shell: pwsh
+        run: |
+          $v = (Get-Item target/release/logi-options-plus-mini.exe).VersionInfo
+          if ([string]::IsNullOrEmpty($v.FileVersion)) {
+            Write-Error "Version resources missing - rc.exe step failed on the runner"
+            exit 1
+          }
+          Write-Host "Version: $($v.FileVersion)"
+
+      # 防止 tag 和代码版本漂移：v1.2.3 必须对应 Cargo.toml 的 1.2.3
+      - name: Check tag matches Cargo.toml version
+        if: startsWith(github.ref, 'refs/tags/v')
+        shell: bash
+        run: |
+          CARGO_VER=$(grep -m1 '^version' Cargo.toml | sed 's/version = "\(.*\)"/\1/')
+          TAG_VER="${GITHUB_REF_NAME#v}"
+          if [ "$CARGO_VER" != "$TAG_VER" ]; then
+            echo "::error::Tag v$TAG_VER does not match Cargo.toml version $CARGO_VER"
+            exit 1
+          fi
+
+      # 发布说明直接取自 CHANGELOG 对应版本段，保持一处维护
+      - name: Prepare release notes
+        if: startsWith(github.ref, 'refs/tags/v')
+        shell: bash
+        run: |
+          VER="${GITHUB_REF_NAME#v}"
+          {
+            echo "## 中文"
+            awk -v ver="$VER" 'index($0, "## " ver)==1 {flag=1; next} /^## / {if (flag) exit} flag' CHANGELOG.md
+            echo
+            echo "---"
+            echo
+            echo "## English"
+            awk -v ver="$VER" 'index($0, "## " ver)==1 {flag=1; next} /^## / {if (flag) exit} flag' CHANGELOG_EN.md
+          } > release-notes.md
+          cat release-notes.md
+
+      - name: Create release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          name: Windows GUI tool ${{ github.ref_name }}
+          body_path: release-notes.md
+          files: target/release/logi-options-plus-mini.exe
