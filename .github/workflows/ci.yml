@@ -66,10 +66,18 @@ jobs:
           } > release-notes.md
           cat release-notes.md
 
+      # 脚本版与 exe 同版本号发布：打 tag 时把 scripts/ 打包挂上
+      - name: Package script edition
+        if: startsWith(github.ref, 'refs/tags/v')
+        shell: pwsh
+        run: Compress-Archive -Path scripts/* -DestinationPath "logi-options-plus-mini-scripts-${{ github.ref_name }}.zip" -Force
+
       - name: Create release
         if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
         with:
           name: Windows GUI tool ${{ github.ref_name }}
           body_path: release-notes.md
-          files: target/release/logi-options-plus-mini.exe
+          files: |
+            target/release/logi-options-plus-mini.exe
+            logi-options-plus-mini-scripts-${{ github.ref_name }}.zip
