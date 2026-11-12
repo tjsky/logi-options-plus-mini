@@ -1,0 +1,78 @@
+name: Update Star History
+
+on:
+  schedule:
+    # 每隔4个小时运行一次
+    - cron: "17 */4 * * *"
+  workflow_dispatch: # 允许在 Actions 页面手动触发
+
+permissions:
+  contents: write
+
+concurrency:
+  group: star-history
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Prepare data branch
+        run: |
+          set -euo pipefail
+          target="$RUNNER_TEMP/star-history"
+          if git ls-remote --exit-code --heads origin refs/heads/star-history >/dev/null 2>&1; then
+            git fetch --no-tags origin refs/heads/star-history:refs/remotes/origin/star-history
+            git worktree add --detach "$target" refs/remotes/origin/star-history
+            git -C "$target" switch -c star-history
+          else
+            git worktree add --detach "$target"
+            git -C "$target" switch --orphan star-history
+            git -C "$target" rm -rf --ignore-unmatch .
+          fi
+          echo "STAR_HISTORY_DIR=$target" >> "$GITHUB_ENV"
+
+      - name: Generate snapshot
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: node .github/scripts/star-history.mjs snapshot "$STAR_HISTORY_DIR"
+
+      - name: Publish snapshot
+        run: |
+          set -euo pipefail
+          git -C "$STAR_HISTORY_DIR" config user.name github-actions[bot]
+          git -C "$STAR_HISTORY_DIR" config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git -C "$STAR_HISTORY_DIR" add history.json star-history.svg
+          if git -C "$STAR_HISTORY_DIR" diff --cached --quiet; then
+            echo "Star history is already up to date"
+            exit 0
+          fi
+          git -C "$STAR_HISTORY_DIR" commit -m "chore: update star history snapshot"
+          git -C "$STAR_HISTORY_DIR" push origin HEAD:refs/heads/star-history
+
+      - name: Keepalive
+        if: always()
+        run: |
+          set -euo pipefail
+          # GitHub 会在公共仓库连续 60 天无提交活动后自动禁用定时工作流。
+          # 本步骤每天随本工作流运行（此时工作流尚未被禁用），当默认分支
+          # 最后一次提交超过 45 天时补一个空提交保活，约每 45 天一次，
+          # 避免刷屏，也不会到达 60 天禁用线。
+          age_days=$(( ($(date +%s) - $(git log -1 --format=%ct)) / 86400 ))
+          if [ "$age_days" -lt 45 ]; then
+            echo "Last commit was ${age_days} day(s) ago; no keepalive needed"
+            exit 0
+          fi
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git commit --allow-empty -m "chore: keepalive (prevent scheduled workflow auto-disable)"
+          git push origin HEAD
