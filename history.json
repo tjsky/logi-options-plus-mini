@@ -1,6 +1,6 @@
 {
   "repository": "tjsky/logi-options-plus-mini",
-  "updated": "2026-11-16",
+  "updated": "2026-11-17",
   "points": [
     {
       "date": "2026-01-04",
@@ -1269,6 +1269,10 @@
     {
       "date": "2026-11-16",
       "stars": 815
+    },
+    {
+      "date": "2026-11-17",
+      "stars": 816
     }
   ]
 }
