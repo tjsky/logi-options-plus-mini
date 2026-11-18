@@ -1,13 +1,17 @@
 ﻿# Script to install latest Logi Options+ on Windows (Multi-language Support)
 # Fixed encoding
 # Region Detection & Language Setup 
+# 关掉进度条：Windows PowerShell 5.1 的 Invoke-WebRequest 用进度条重绘整个控制台，
+# 50MB 安装包会被拖慢 3 倍（实测 39s → 12s），还会刷出上千行「正在写入 Web 请求」。
+# 对 PowerShell 7 无副作用（它本来就不显示这种进度）。
+$ProgressPreference = 'SilentlyContinue'
 $isCN = $false
 $traceUrl = "https://cloudflare.com/cdn-cgi/trace"
 
 Write-Host "Detecting region..." -NoNewline
 try {
     # Attempt to detect region
-    $traceResponse = Invoke-RestMethod -Uri $traceUrl -TimeoutSec 5
+    $traceResponse = Invoke-RestMethod -Uri $traceUrl -TimeoutSec 5 -UseBasicParsing
     if ($traceResponse -match "loc=CN") {
         $isCN = $true
         Write-Host " [China Detected]" -ForegroundColor Green
@@ -27,6 +31,7 @@ if ($isCN) {
     $txt.DownloadUrlMsg    = "检测到您位于中国地区，使用 CN 下载源"
     $txt.DownloadDefMsg    = "使用默认下载源"
     $txt.Downloading       = "正在下载安装包:"
+    $txt.DownloadRetry     = "下载失败，换备用下载源重试:"
     $txt.DownloadSuccess   = "下载成功。"
     $txt.DownloadFail      = "下载安装包失败。"
     $txt.SelectKeep        = "请选择你想保留/开启的功能："
@@ -63,6 +68,7 @@ if ($isCN) {
     $txt.DownloadUrlMsg    = "Detected region: China, using CN download URL"
     $txt.DownloadDefMsg    = "Using default download URL"
     $txt.Downloading       = "Downloading Installer from:"
+    $txt.DownloadRetry     = "Download failed, retrying with mirror:"
     $txt.DownloadSuccess   = "Download completed successfully."
     $txt.DownloadFail      = "Failed to download installer."
     $txt.SelectKeep        = "Please select the features you want to keep:"
@@ -120,10 +126,27 @@ if ($isCN) {
 }
 
 Write-Host "$(Get-Date) | $($txt.Downloading) $selectedDownloadUrl"
-Invoke-WebRequest -Uri $selectedDownloadUrl -OutFile $downloadPath
+
+# 两个引擎的 HTTP 栈不同（5.1 走 .NET Framework + 系统代理，7 走自己的 HttpClient），
+# 同一台机器上探测出的区域可能不一致。所以主源失败就自动换另一个官方源重试，
+# 不让一个探测结果把用户卡死。
+$mirrors = if ($isCN) { @($downloadUrlCN, $downloadUrl) } else { @($downloadUrl, $downloadUrlCN) }
+$downloadOk = $false
+foreach ($mirror in $mirrors) {
+    try {
+        Invoke-WebRequest -Uri $mirror -OutFile $downloadPath -UseBasicParsing -ErrorAction Stop
+        if ((Test-Path $downloadPath) -and ((Get-Item $downloadPath).Length -gt 0)) {
+            $downloadOk = $true
+            break
+        }
+    } catch {
+        Write-Host "$(Get-Date) | $($txt.DownloadRetry) $mirror" -ForegroundColor Yellow
+        Write-Host "  $($_.Exception.Message)" -ForegroundColor DarkGray
+    }
+}
 
 # Check if download was successful
-if (Test-Path $downloadPath) {
+if ($downloadOk) {
     Write-Host "$(Get-Date) | $($txt.DownloadSuccess)"
 } else {
     Write-Host "$(Get-Date) | $($txt.DownloadFail) $appName"
@@ -202,7 +225,10 @@ if ($selectedFeatures -eq "11") {
 # Confirm settings with the user
 Write-Host ""
 Write-Host $txt.ConfirmTitle
-Write-Host "quiet:                $quiet"
+# $quiet 同时是安装参数（"/quiet" 或一个空格），直接打印会显示成空白，
+# 用户看不出到底开没开，所以单独算一个给人看的文本。
+$quietText = if ($quiet -eq "/quiet") { "Yes" } else { "No" }
+Write-Host "quiet:                $quietText"
 Write-Host "analytics:            $analytics"
 Write-Host "flow:                 $flow"
 Write-Host "sso:                  $sso"

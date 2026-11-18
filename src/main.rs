@@ -7,6 +7,8 @@
 //!   --verify         下载安装包并校验签名，不执行安装
 //!   --plan           打印安装计划（卸载方式、备份路径、安装参数），不动系统
 //!   --install        真正执行安装；可叠加 --offline / --no-backup / --interactive / --keep
+//!   --uninstall-plan 打印卸载计划，不动系统
+//!   --uninstall      真正卸载；可叠加 --purge（连配置和残留一起删）
 
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
@@ -24,11 +26,12 @@ use eframe::egui;
 
 use features::{preset, Edition, Feature, FEATURES};
 use profile::Settings;
-use service::InstallRequest;
+use service::{InstallRequest, UninstallRequest};
 
 enum Cmd {
     CheckUpdate,
     Install(InstallRequest),
+    Uninstall(UninstallRequest),
 }
 
 enum Msg {
@@ -41,6 +44,8 @@ enum Msg {
         local: Option<String>,
         remote: Option<String>,
     },
+    /// 卸载后要把「本机版本」清空，所以单独一条消息（Manifest 只在有值时覆盖）
+    Installed(Option<String>),
     Done,
 }
 
@@ -207,6 +212,28 @@ fn run_cli(args: &[String]) {
         }
     }
 
+    if has("--uninstall-plan") || has("--uninstall") {
+        let request = service::UninstallRequest {
+            purge_config: has("--purge"),
+            dry_run: has("--uninstall-plan") && !has("--uninstall"),
+        };
+
+        if has("--uninstall-plan") {
+            log("卸载计划：".to_string());
+            for line in service::describe_uninstall(&request) {
+                log(format!("  · {line}"));
+            }
+        }
+
+        if has("--uninstall") {
+            let outcome = service::run_uninstall(&request, &log, &progress);
+            log(if outcome.success { "✓ " } else { "✗ " }.to_string() + &outcome.message);
+            if !outcome.success && !outcome.cancelled {
+                exit_code = 1;
+            }
+        }
+    }
+
     if has("--verify") || has("--install") {
         let outcome = service::run(&request(), &log, &progress);
         log(if outcome.success { "✓ " } else { "✗ " }.to_string() + &outcome.message);
@@ -239,6 +266,8 @@ struct App {
     busy: bool,
     show_log: bool,
     dark: bool,
+    /// 卸载是破坏性操作，先弹一行确认再执行
+    confirm_uninstall: bool,
 }
 
 impl App {
@@ -256,6 +285,7 @@ impl App {
             busy: false,
             show_log: false,
             dark,
+            confirm_uninstall: false,
         }
     }
 
@@ -293,8 +323,12 @@ impl App {
                         self.remote_version = remote;
                     }
                 }
+                Msg::Installed(version) => {
+                    self.local_version = version;
+                }
                 Msg::Done => {
                     self.busy = false;
+                    self.confirm_uninstall = false;
                     self.progress = None;
                     self.progress_label.clear();
                 }
@@ -327,6 +361,12 @@ impl eframe::App for App {
                 ui.add_space(10.0);
 
                 actions(ui, self);
+
+                if self.confirm_uninstall {
+                    ui.add_space(8.0);
+                    uninstall_confirm(ui, self);
+                }
+
                 ui.add_space(10.0);
                 ui.separator();
                 ui.add_space(8.0);
@@ -428,7 +468,72 @@ fn actions(ui: &mut egui::Ui, app: &mut App) {
             let _ = std::fs::create_dir_all(&dir);
             let _ = std::process::Command::new("explorer").arg(&dir).spawn();
         }
+
+        ui.add_space(12.0);
+
+        let can_uninstall = !app.busy && app.local_version.is_some();
+        if ui
+            .add_enabled(can_uninstall, egui::Button::new("干净卸载"))
+            .on_hover_text("把 Logi Options+ 从系统里卸载掉（会弹一次管理员授权）")
+            .on_disabled_hover_text("本机没有检测到 Logi Options+")
+            .clicked()
+        {
+            app.confirm_uninstall = true;
+        }
     });
+}
+
+/// 卸载确认条。用内联条而不是模态窗口：更轻，也不会把下面的开关挡住。
+fn uninstall_confirm(ui: &mut egui::Ui, app: &mut App) {
+    let fill = ui.visuals().faint_bg_color;
+    egui::Frame::new()
+        .inner_margin(egui::Margin::symmetric(12, 10))
+        .corner_radius(egui::CornerRadius::same(6))
+        .fill(fill)
+        .show(ui, |ui| {
+            ui.label(egui::RichText::new("确认卸载 Logi Options+？").strong());
+            ui.add(
+                egui::Label::new(
+                    egui::RichText::new("会移除程序本体和注册表项，卸载后要重新安装才能继续用。")
+                        .weak()
+                        .size(13.0),
+                )
+                .wrap(),
+            );
+
+            ui.add_space(6.0);
+            if ui
+                .checkbox(
+                    &mut app.settings.purge_on_uninstall,
+                    "同时删除按键配置与残留文件",
+                )
+                .on_hover_text(
+                    "连按键自定义、更新器状态机和下载缓存一起删掉。\
+                     只是想重装就先别勾——勾了配置就找不回来了。",
+                )
+                .changed()
+            {
+                profile::save(&app.settings);
+            }
+
+            ui.add_space(8.0);
+            ui.horizontal(|ui| {
+                if ui.button("取消").clicked() {
+                    app.confirm_uninstall = false;
+                }
+
+                if ui.button("确认卸载").clicked() {
+                    let request = UninstallRequest {
+                        purge_config: app.settings.purge_on_uninstall,
+                        dry_run: false,
+                    };
+                    app.confirm_uninstall = false;
+                    app.busy = true;
+                    app.show_log = true;
+                    let _ = app.cmd_tx.send(Cmd::Uninstall(request));
+                }
+            });
+        });
 }
 
 fn options_row(ui: &mut egui::Ui, app: &mut App) {
@@ -688,6 +793,21 @@ fn worker(rx: Receiver<Cmd>, tx: Sender<Msg>) {
                     local: installed.version,
                     remote: None,
                 });
+            }
+            Cmd::Uninstall(request) => {
+                let log = |line: String| {
+                    let _ = tx.send(Msg::Log(line));
+                };
+                let progress = |fraction: Option<f32>, label: String| {
+                    let _ = tx.send(Msg::Progress { label, fraction });
+                };
+
+                let outcome = service::run_uninstall(&request, &log, &progress);
+                let _ = tx.send(Msg::Log(
+                    if outcome.success { "✓ " } else { "✗ " }.to_string() + &outcome.message,
+                ));
+
+                let _ = tx.send(Msg::Installed(winapi::detect_installed().version));
             }
         }
 

@@ -334,6 +334,14 @@ pub fn program_files() -> PathBuf {
         .unwrap_or_else(|| PathBuf::from("C:/Program Files"))
 }
 
+/// 更新器把安装状态机放在 `%ProgramData%\LogiOptionsPlus`（builds / depots / current.json），
+/// 它决定了「同版本是否跳过安装」，卸载干净时也应该一并清掉。
+pub fn program_data() -> PathBuf {
+    std::env::var_os("ProgramData")
+        .map(PathBuf::from)
+        .unwrap_or_else(|| PathBuf::from("C:/ProgramData"))
+}
+
 pub fn work_dir() -> PathBuf {
     local_app_data().join("LogiOptionsPlusMini")
 }

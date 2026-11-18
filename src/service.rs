@@ -1,7 +1,7 @@
 //! 安装主流程。顺序严格对齐 C# 版，每一步的坑都在注释里写清楚了。
 
-use std::path::Path;
-use std::time::SystemTime;
+use std::path::{Path, PathBuf};
+use std::time::{Duration, Instant, SystemTime};
 
 use crate::features::{build_args, to_command_line};
 use crate::net;
@@ -333,29 +333,56 @@ fn mtime(path: &Path) -> Option<SystemTime> {
     std::fs::metadata(path).and_then(|meta| meta.modified()).ok()
 }
 
-/// 官方卸载器偶尔会静默空转：退出码 0 但注册表和安装目录纹丝不动
-/// （2026-11-10 真机实测踩到一次，同样命令稍后手动重跑即成功）。
-/// 所以退出码不足为凭，必须按系统实际状态复核；确认空转就重试一次。
-fn verify_uninstall(file: &Path, args: &[String], log: Logger) {
+/// 官方卸载器把真正的删除交给后台进程，主进程几秒内就返回 0。
+/// 所以「退出码 0」之后不能立刻查状态——必须轮询到注册表和安装目录真的消失。
+///
+/// 2026-11-18 实测：返回后立刻查询会得到「程序还在」，几秒后再查却已经彻底删干净。
+/// 11-10 记在案的「官方卸载器静默空转」其实就是这个查询太早造成的误判。
+fn wait_removed(timeout: Duration, log: Logger) -> bool {
     if !winapi::detect_installed().found() {
+        return true;
+    }
+
+    let deadline = Instant::now() + timeout;
+    let mut waited = 0u64;
+
+    while Instant::now() < deadline {
+        std::thread::sleep(Duration::from_millis(500));
+        waited += 500;
+
+        if !winapi::detect_installed().found() {
+            log(format!("程序已移除（等待了约 {:.1} 秒）。", waited as f64 / 1000.0));
+            return true;
+        }
+
+        if waited % 10_000 == 0 {
+            log(format!("卸载器仍在后台清理…（已等待 {} 秒）", waited / 1000));
+        }
+    }
+
+    false
+}
+
+/// 卸载后复核：退出码不足为凭，按系统实际状态等待并判断；
+/// 确认没动静才重试一次。
+fn verify_uninstall(file: &Path, args: &[String], log: Logger) {
+    if wait_removed(Duration::from_secs(75), log) {
         return;
     }
 
-    log("卸载器退出码为 0，但程序还在（注册表键和安装目录都没动）——这次卸载是空操作，重试一次…"
-        .to_string());
-    std::thread::sleep(std::time::Duration::from_secs(2));
+    log("卸载器已经返回，但等待后程序仍在——重试一次…".to_string());
+    std::thread::sleep(Duration::from_secs(1));
 
     match winapi::run_elevated(file, args, None) {
         Ok(outcome) if outcome.cancelled => {
-            log("重试的卸载被取消，继续按原状态尝试安装。".to_string());
+            log("重试的卸载被取消。".to_string());
         }
         Ok(_) => {
-            if winapi::detect_installed().found() {
-                log("重试后程序仍在。接下来官方安装器大概率会判定同版本而跳过，功能开关不会生效。\
-                     可以改用离线版覆盖安装——实测离线包不查更新状态，会直接重装并重写开关。"
-                    .to_string());
-            } else {
+            if wait_removed(Duration::from_secs(75), log) {
                 log("重试后卸载成功。".to_string());
+            } else {
+                log("重试后程序仍在。可以重启后再试，或者从「设置 → 应用」里卸载。"
+                    .to_string());
             }
         }
         Err(error) => log(format!("重试启动失败：{error}")),
@@ -422,6 +449,263 @@ pub fn describe_plan(req: &InstallRequest) -> Vec<String> {
         "安装参数：{}",
         to_command_line(&build_args(req.quiet, &req.features, None))
     ));
+
+    lines
+}
+
+// ---------------------------------------------------------------- 卸载
+
+pub struct UninstallRequest {
+    /// 同时删掉按键配置、备份目录、更新器状态机和下载缓存
+    pub purge_config: bool,
+    pub dry_run: bool,
+}
+
+pub fn run_uninstall(req: &UninstallRequest, log: Logger, progress: Progress) -> Outcome {
+    match uninstall_inner(req, log, progress) {
+        Ok(message) => Outcome {
+            success: true,
+            cancelled: false,
+            message,
+        },
+        Err(failure) => Outcome {
+            success: false,
+            cancelled: failure.cancelled,
+            message: failure.message,
+        },
+    }
+}
+
+fn uninstall_inner(
+    req: &UninstallRequest,
+    log: Logger,
+    progress: Progress,
+) -> Result<String, Failure> {
+    std::fs::create_dir_all(winapi::work_dir()).ok();
+
+    let installed = winapi::detect_installed();
+    if installed.found() {
+        log(format!(
+            "已安装：版本 {}，位置 {}",
+            installed.version.clone().unwrap_or_else(|| "未知".into()),
+            installed.location.clone().unwrap_or_else(|| "未知".into())
+        ));
+    } else {
+        log("本机没有检测到 Logi Options+，跳过卸载。".to_string());
+    }
+
+    let command = if installed.found() {
+        uninstall_command(&installed)
+    } else {
+        None
+    };
+
+    if installed.found() && command.is_none() {
+        return Err(Failure::new(
+            "没找到可用的卸载程序：产品自带卸载器和缓存安装包都不在。\
+             先跑一次「开始安装」把官方安装包下载下来，再回来卸载即可。",
+        ));
+    }
+
+    let mut uninstalled = false;
+
+    if let Some((file, args, kind)) = &command {
+        log(format!(
+            "将使用{kind}卸载：{} {}",
+            file.display(),
+            to_command_line(args)
+        ));
+
+        if req.dry_run {
+            log("[只看不做] 未执行卸载，系统没有任何改动。".to_string());
+        } else {
+            winapi::stop_logitech_processes(log);
+            progress(None, "正在卸载…（官方卸载器可能要 1~2 分钟）".to_string());
+
+            match winapi::run_elevated(file, args, None) {
+                Ok(outcome) if outcome.cancelled => return Err(Failure::cancelled()),
+                Ok(outcome) if outcome.exit_code != 0 => log(format!(
+                    "卸载器返回退出码 {}。退出码不可信，按系统实际状态复核。",
+                    outcome.exit_code
+                )),
+                Ok(outcome) => log(format!("卸载器退出码 {}", outcome.exit_code)),
+                Err(error) => return Err(Failure::new(format!("卸载器启动失败：{error}"))),
+            }
+
+            // 实测官方卸载器会静默空转：退出码 0，注册表和安装目录纹丝不动
+            verify_uninstall(file, args, log);
+
+            if winapi::detect_installed().found() {
+                return Err(Failure::new(
+                    "卸载没有生效：注册表和安装目录仍然存在。\
+                     重启后再试一次，或者从「设置 → 应用」里卸载。",
+                ));
+            }
+
+            log("卸载完成：注册表项与安装目录都已清除。".to_string());
+            uninstalled = true;
+        }
+    }
+
+    if req.purge_config {
+        let mut denied: Vec<PathBuf> = Vec::new();
+
+        for path in purge_targets() {
+            if req.dry_run {
+                log(format!("[只看不做] 将删除 {}", path.display()));
+            } else if !remove_dir(&path, log) {
+                denied.push(path);
+            }
+        }
+
+        // `%ProgramData%\LogiOptionsPlus` 属主是管理员，普通权限删不掉，
+        // 只能为一个目录多弹一次授权（用户主动勾了「彻底清理」才走到这里）。
+        if !denied.is_empty() {
+            log("有目录需要管理员权限，正在提权删除…".to_string());
+            for path in denied {
+                elevate_remove_dir(&path, log);
+            }
+        }
+    } else if !req.dry_run {
+        log("按键配置和下载缓存按设置保留着（想彻底清掉请勾「同时删除配置与残留」）。".to_string());
+    }
+
+    progress(None, String::new());
+
+    Ok(if req.dry_run {
+        "检查完成，系统没有改动。".to_string()
+    } else if uninstalled {
+        "已卸载干净。".to_string()
+    } else {
+        "本机本来就没有安装 Logi Options+。".to_string()
+    })
+}
+
+/// 卸载器选取顺序和安装流程一致：优先产品自带卸载器（注册表 UninstallString 原文），
+/// 其次用缓存里上次下载的安装包走 `/uninstall`。
+fn uninstall_command(installed: &winapi::Installed) -> Option<(PathBuf, Vec<String>, &'static str)> {
+    if let Some(updater) = winapi::resolve_uninstaller(installed.location.as_deref()) {
+        return Some((
+            updater,
+            vec![
+                "--uninstall".to_string(),
+                "--full".to_string(),
+                "--shadow".to_string(),
+            ],
+            "产品自带卸载器",
+        ));
+    }
+
+    for name in [
+        "logioptionsplus_installer.exe",
+        "logioptionsplus_installer_offline.exe",
+    ] {
+        let cached = winapi::cache_dir().join(name);
+        if cached.exists() {
+            return Some((cached, vec!["/uninstall".to_string()], "缓存安装包"));
+        }
+    }
+
+    None
+}
+
+/// 「干净」指的不只是卸载，还包括更新器状态机和下载缓存这些不会自己消失的东西。
+fn purge_targets() -> Vec<PathBuf> {
+    vec![
+        winapi::config_dir(),
+        winapi::backup_dir(),
+        winapi::program_data().join("LogiOptionsPlus"),
+        winapi::cache_dir(),
+    ]
+}
+
+/// 返回 true 表示目录已经不存在（删掉了，或者本来就没有）。
+fn remove_dir(path: &Path, log: Logger) -> bool {
+    if !path.exists() {
+        return true;
+    }
+
+    match std::fs::remove_dir_all(path) {
+        Ok(()) => {
+            log(format!("已删除 {}", path.display()));
+            true
+        }
+        Err(error) => {
+            log(format!("删除 {} 没成功：{error}", path.display()));
+            false
+        }
+    }
+}
+
+/// 提权只为一个目录服务：`%ProgramData%\LogiOptionsPlus` 的属主是管理员，
+/// 普通权限连里面单个 json 都改不了。用系统自带的 cmd /c rd，不引入额外依赖。
+fn elevate_remove_dir(path: &Path, log: Logger) -> bool {
+    if !path.exists() {
+        return true;
+    }
+
+    let cmd = std::env::var_os("SystemRoot")
+        .map(PathBuf::from)
+        .unwrap_or_else(|| PathBuf::from("C:/Windows"))
+        .join("System32")
+        .join("cmd.exe");
+
+    let args = vec![
+        "/c".to_string(),
+        "rd".to_string(),
+        "/s".to_string(),
+        "/q".to_string(),
+        path.to_string_lossy().to_string(),
+    ];
+
+    match winapi::run_elevated(&cmd, &args, None) {
+        Ok(outcome) if outcome.cancelled => {
+            log(format!("提权删除被取消，{} 还留着。", path.display()));
+            false
+        }
+        Ok(_) => {
+            if path.exists() {
+                log(format!("{} 仍然存在（可能被占用）。", path.display()));
+                false
+            } else {
+                log(format!("已删除 {}", path.display()));
+                true
+            }
+        }
+        Err(error) => {
+            log(format!("提权删除 {} 失败：{error}", path.display()));
+            false
+        }
+    }
+}
+
+pub fn describe_uninstall(req: &UninstallRequest) -> Vec<String> {
+    let mut lines = Vec::new();
+    let installed = winapi::detect_installed();
+
+    lines.push(match &installed.version {
+        Some(version) => format!("本机已装 {version}，将执行卸载"),
+        None => "本机未安装，无需卸载".to_string(),
+    });
+
+    if installed.found() {
+        match uninstall_command(&installed) {
+            Some((file, args, kind)) => lines.push(format!(
+                "用{kind}卸载：{} {}",
+                file.display(),
+                to_command_line(&args)
+            )),
+            None => lines.push("找不到卸载程序，需要先下载官方安装包".to_string()),
+        }
+    }
+
+    if req.purge_config {
+        for path in purge_targets() {
+            lines.push(format!("删除 {}", path.display()));
+        }
+    } else {
+        lines.push("保留按键配置与下载缓存".to_string());
+    }
 
     lines
 }

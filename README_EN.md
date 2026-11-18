@@ -40,6 +40,7 @@ A **6 MB** single-file tool — no installer, no runtime required — that turns
   - **Online edition**: the official installer itself is 50 MB; installed size is around 750 MB
   - **Offline edition**: Logitech's official "version without online features". The installer itself is 700 MB; installed size is around 500 MB. It updates a few weeks behind the online edition.
 - **Keep your existing settings**: your key and mouse customizations are backed up before installing and restored afterwards
+- **Clean uninstall**: removes Logi Options+ from the system in one click. The official uninstaller hands the actual removal to a background process and returns immediately, so the tool polls until the registry entry and install directory are really gone before reporting the result. Optionally removes key settings, the updater state and the download cache as well
 - **Keep the installer after setup**: downloaded installers are not deleted, so you can reuse them
 - **Signature verification**: downloaded packages must pass Authenticode verification (signed by Logitech Inc) before installation
 - **Offline suggestion**: when your selection is close to the offline defaults, a one-click switch is offered
@@ -67,6 +68,8 @@ The installation temporarily closes Logi Options+ related processes and everythi
 | `logi-options-plus-mini.exe --check` | Compare installed version with the latest official one |
 | `--plan` | List the actions that would be performed, without touching the system |
 | `--install` | Install directly; combine with `--offline` and `--features dfu,backlight` |
+| `--uninstall` | Uninstall Logi Options+; add `--purge` to remove settings and leftovers too |
+| `--uninstall-plan` | Show what the uninstall would do, without touching the system |
 
 ### GUI tool FAQ
 

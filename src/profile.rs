@@ -20,6 +20,8 @@ pub struct Settings {
     pub cover_install: bool,
     pub features: Vec<bool>,
     pub dark_theme: Option<bool>,
+    /// 干净卸载时是否连按键配置、更新器状态机和下载缓存一起删掉
+    pub purge_on_uninstall: bool,
 }
 
 impl Default for Settings {
@@ -33,6 +35,7 @@ impl Default for Settings {
             cover_install: false,
             features: crate::features::preset(crate::features::Edition::Online),
             dark_theme: None,
+            purge_on_uninstall: false,
         }
     }
 }

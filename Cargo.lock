@@ -1176,7 +1176,7 @@ checksum = "5d15f86d12da44cd8d4ec3c73984537eb7f4cadcb9776a575a0a8a05ca11005c"
 
 [[package]]
 name = "logi-options-plus-mini"
-version = "1.0.0"
+version = "1.1.0"
 dependencies = [
  "eframe",
  "serde",
